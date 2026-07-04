@@ -29,7 +29,8 @@ TARBALL_URL = "https://github.com/{repo}/archive/refs/heads/{branch}.tar.gz"
 def package_from_github(tmp, url):
     """Extract the jtop_installer package from a repo tarball into tmp."""
     print("Fetching {}".format(url))
-    with urllib.request.urlopen(url, timeout=60) as response:
+    request = urllib.request.Request(url, headers={"User-Agent": "jtop-installer"})
+    with urllib.request.urlopen(request, timeout=60) as response:
         buffer = io.BytesIO(response.read())
     extracted = False
     with tarfile.open(fileobj=buffer, mode="r:gz") as tar:

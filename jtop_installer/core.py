@@ -94,7 +94,11 @@ def ensure_uv():
         uv_self_update(uv)
         return uv
     print("Installing 'uv' (an exceptionally fast Python package installer)...")
-    with urllib.request.urlopen(UV_INSTALL_URL) as response:
+    # astral.sh returns 403 to the default Python-urllib User-Agent.
+    request = urllib.request.Request(
+        UV_INSTALL_URL, headers={"User-Agent": "jtop-installer"}
+    )
+    with urllib.request.urlopen(request, timeout=60) as response:
         script = response.read()
     run(["sh"], input_bytes=script)
     uv = uv_path()
