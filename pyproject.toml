@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=77.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "jtop-installer"
+dynamic = ["version"]
+description = "Bootstrap installer for jetson-stats (jtop): isolated uv venv, system-wide symlink, and systemd service — never touches system site-packages"
+readme = "README.md"
+authors = [
+    {name = "Raffaello Bonghi", email = "raffaello@rnext.it"},
+]
+license = "AGPL-3.0-or-later"
+keywords = ["jetson_stats", "jtop", "installer", "nvidia", "Jetson"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Intended Audience :: Developers",
+    "Topic :: System :: Installation/Setup",
+    "Programming Language :: Python :: 3",
+    "Operating System :: POSIX :: Linux",
+]
+requires-python = ">=3.8"
+dependencies = []
+
+[project.urls]
+Repository = "https://github.com/rbonghi/jetson_stats"
+Issues = "https://github.com/rbonghi/jetson_stats/issues"
+
+[project.scripts]
+jtop-installer = "jtop_installer.cli:main"
+
+[tool.setuptools]
+packages = ["jtop_installer"]
+
+[tool.setuptools.dynamic]
+version = {attr = "jtop_installer.__version__"}
