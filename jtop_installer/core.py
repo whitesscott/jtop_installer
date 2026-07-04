@@ -282,7 +282,8 @@ def install(ref=DEFAULT_REF, python=DEFAULT_PYTHON):
     run(["groupadd", "-f", APP_NAME], sudo=True)
 
     print("Creating Python virtual environment in {}...".format(VENV_DIR))
-    run([uv, "venv", VENV_DIR, "-p", python, "--seed"])
+    # --clear replaces an existing venv without an interactive prompt.
+    run([uv, "venv", VENV_DIR, "-p", python, "--seed", "--clear"])
 
     print("Installing/upgrading {} from: {}".format(PKG_NAME, ref))
     run([uv, "pip", "install", "--python", JTOP_PYTHON, "--upgrade", ref])
