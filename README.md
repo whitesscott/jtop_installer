@@ -20,6 +20,14 @@ run `sudo -v` first if you prefer to prime credentials).
 ### One step, no prerequisites (only python3)
 
 ```bash
+curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
+```
+
+With no arguments it auto-detects: if jtop already exists (venv, symlink,
+`PATH`, or a legacy copy in system/user site-packages or /opt) it runs
+`upgrade`, otherwise `install`. Append `install` or `upgrade` to force one:
+
+```bash
 curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - install
 ```
 
@@ -34,6 +42,9 @@ itself. Set `JTOP_INSTALLER_BRANCH` to bootstrap from a branch other than
 With [uv](https://docs.astral.sh/uv/) installed:
 
 ```bash
+# Auto-detect (upgrade if jtop exists, install otherwise)
+uvx jtop-installer
+
 # Fresh install
 uvx jtop-installer install
 

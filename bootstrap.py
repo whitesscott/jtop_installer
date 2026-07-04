@@ -2,6 +2,10 @@
 """One-step bootstrap for jtop-installer (no uv, pip, or git required).
 
 Usage:
+    # Auto-detects an existing jtop install and runs install or upgrade:
+    curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
+
+    # Or force one explicitly:
     curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - install
     curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - upgrade
 

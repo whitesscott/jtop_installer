@@ -228,6 +228,50 @@ def remove_legacy_jtop():
         run(["rm", "-rf"] + dist_info_dirs, sudo=True)
 
 
+def existing_jtop_installs():
+    """Find evidence of an existing jtop install (no sudo needed)."""
+    home = Path.home()
+    candidates = [
+        VENV_DIR,
+        SYMLINK_PATH,
+        home / ".local" / "bin" / APP_NAME,
+    ]
+    found = [str(path) for path in candidates if path.is_symlink() or path.exists()]
+    patterns = [
+        "/usr/lib/python3*/dist-packages/jtop",
+        "/usr/lib/python3*/site-packages/jtop",
+        "/usr/local/lib/python3*/dist-packages/jtop",
+        "/usr/local/lib/python3*/site-packages/jtop",
+        "/opt/jtop",
+        "/opt/*/jtop",
+        str(home / ".local" / "lib" / "python3*" / "site-packages" / "jtop"),
+    ]
+    for pattern in patterns:
+        found.extend(sorted(glob.glob(pattern)))
+    on_path = shutil.which(APP_NAME)
+    if on_path:
+        found.append(on_path)
+    unique = []
+    for path in found:
+        if path not in unique:
+            unique.append(path)
+    return unique
+
+
+def auto(ref=DEFAULT_REF, python=DEFAULT_PYTHON):
+    found = existing_jtop_installs()
+    if found:
+        print("Existing jtop installation detected:")
+        for path in found:
+            print("  {}".format(path))
+        print("Running upgrade...")
+        print()
+        return upgrade(ref=ref)
+    print("No existing jtop installation detected. Running install...")
+    print()
+    return install(ref=ref, python=python)
+
+
 def install(ref=DEFAULT_REF, python=DEFAULT_PYTHON):
     ensure_not_root()
     run(["sudo", "-v"])
