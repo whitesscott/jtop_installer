@@ -6,6 +6,7 @@ written to, so there is no need for --break-system-packages.
 """
 import glob
 import os
+import re
 import shutil
 import subprocess
 import urllib.request
@@ -197,18 +198,28 @@ def remove_legacy_jtop():
         )
     )
     for py in pythons:
+        # Skip non-interpreters like python3.12-config.
+        if not re.match(r"python3(\.\d+)?$", os.path.basename(py)):
+            continue
         if not os.access(py, os.X_OK):
             continue
         print("Trying: sudo {} -m pip uninstall -y jetson-stats jetson_stats".format(py))
+        # First attempt runs silently; on externally managed Pythons (PEP 668)
+        # it fails with a long error, so only its retry output is shown.
         result = subprocess.run(
-            ["sudo", py, "-m", "pip", "uninstall", "-y", "jetson-stats", "jetson_stats"]
+            ["sudo", py, "-m", "pip", "uninstall", "-y", "jetson-stats", "jetson_stats"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
         )
-        if result.returncode != 0:
-            print("Retrying with --break-system-packages for externally managed Python...")
-            subprocess.run(
-                ["sudo", py, "-m", "pip", "uninstall", "-y", "--break-system-packages",
-                 "jetson-stats", "jetson_stats"]
-            )
+        if result.returncode == 0:
+            print(result.stdout.decode(), end="")
+            continue
+        print("Retrying with --break-system-packages (externally managed Python)...")
+        subprocess.run(
+            ["sudo", py, "-m", "pip", "uninstall", "-y", "--break-system-packages",
+             "jetson-stats", "jetson_stats"],
+            stderr=subprocess.DEVNULL,
+        )
 
     print("Rechecking for leftover legacy jtop directories...")
     leftover_dirs = _find_system_dirs(APP_NAME)
