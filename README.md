@@ -20,13 +20,14 @@ run `sudo -v` first if you prefer to prime credentials).
 ### One step, no prerequisites (only python3)
 
 ```bash
-curl -LsSf https://raw.githubusercontent.com/rbonghi/jetson_stats/master/jtop_installer/bootstrap.py | python3 - install
+curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - install
 ```
 
-`bootstrap.py` downloads the jtop-installer wheel from PyPI (falling back to
-the GitHub repo tarball if unpublished), imports it from a temporary
-directory, and runs the CLI — which then bootstraps uv itself if needed. Set
-`JTOP_INSTALLER_BRANCH` to bootstrap from a branch other than `master`.
+`bootstrap.py` downloads this repo's source tarball from GitHub, imports the
+package from a temporary directory, and runs the CLI — which then bootstraps
+uv itself if needed. Nothing is installed on the system by the bootstrap
+itself. Set `JTOP_INSTALLER_BRANCH` to bootstrap from a branch other than
+`main`, or `JTOP_INSTALLER_REPO` to use a fork.
 
 ### With uv or pipx already installed
 

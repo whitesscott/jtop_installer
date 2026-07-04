@@ -2,40 +2,28 @@
 """One-step bootstrap for jtop-installer (no uv, pip, or git required).
 
 Usage:
-    curl -LsSf https://raw.githubusercontent.com/rbonghi/jetson_stats/master/jtop_installer/bootstrap.py | python3 - install
-    curl -LsSf .../bootstrap.py | python3 - upgrade
+    curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - install
+    curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - upgrade
 
-Downloads the jtop-installer wheel from PyPI (or, if not published there,
-the repo tarball from GitHub), imports it from a temporary directory, and
-runs the CLI. Only the Python standard library is used.
+Downloads this repo's source tarball from GitHub, imports the jtop_installer
+package from a temporary directory, and runs the CLI — which then bootstraps
+uv itself if needed. Only the Python standard library is used; nothing is
+installed on the system by this script.
+
+Environment overrides:
+    JTOP_INSTALLER_REPO    GitHub "owner/repo" (default: whitesscott/jtop_installer)
+    JTOP_INSTALLER_BRANCH  branch to fetch (default: main)
 """
 import io
-import json
 import os
 import sys
 import tarfile
 import tempfile
 import urllib.request
 
-PYPI_JSON_URL = "https://pypi.org/pypi/jtop-installer/json"
-REPO_TARBALL_URL = "https://github.com/rbonghi/jetson_stats/archive/refs/heads/{branch}.tar.gz"
-BRANCH = os.environ.get("JTOP_INSTALLER_BRANCH", "master")
-
-
-def wheel_from_pypi(tmp):
-    """Download the latest jtop-installer wheel from PyPI; None if unavailable."""
-    try:
-        with urllib.request.urlopen(PYPI_JSON_URL, timeout=15) as response:
-            data = json.load(response)
-        for release_file in data.get("urls", []):
-            if release_file.get("packagetype") == "bdist_wheel":
-                dest = os.path.join(tmp, release_file["filename"])
-                print("Downloading {}".format(release_file["url"]))
-                urllib.request.urlretrieve(release_file["url"], dest)
-                return dest
-    except Exception as error:
-        print("PyPI not usable ({}); falling back to GitHub.".format(error))
-    return None
+REPO = os.environ.get("JTOP_INSTALLER_REPO", "whitesscott/jtop_installer")
+BRANCH = os.environ.get("JTOP_INSTALLER_BRANCH", "main")
+TARBALL_URL = "https://github.com/{repo}/archive/refs/heads/{branch}.tar.gz"
 
 
 def package_from_github(tmp, url):
@@ -49,10 +37,13 @@ def package_from_github(tmp, url):
             if not member.isfile():
                 continue
             parts = member.name.split("/")
-            # <repo>-<branch>/jtop_installer/jtop_installer/*.py
-            if parts.count("jtop_installer") < 2 or ".." in parts:
+            # Works for both layouts:
+            #   jtop_installer-<branch>/jtop_installer/*.py         (this repo)
+            #   <repo>-<branch>/jtop_installer/jtop_installer/*.py  (monorepo)
+            if "jtop_installer" not in parts or ".." in parts:
                 continue
-            rel = "/".join(parts[parts.index("jtop_installer") + 1:])
+            last = len(parts) - 1 - parts[::-1].index("jtop_installer")
+            rel = "/".join(parts[last:])
             dest = os.path.join(tmp, rel)
             os.makedirs(os.path.dirname(dest), exist_ok=True)
             with open(dest, "wb") as out:
@@ -65,9 +56,8 @@ def package_from_github(tmp, url):
 
 def main():
     with tempfile.TemporaryDirectory() as tmp:
-        path = wheel_from_pypi(tmp)
-        if path is None:
-            path = package_from_github(tmp, REPO_TARBALL_URL.format(branch=BRANCH))
+        url = TARBALL_URL.format(repo=REPO, branch=BRANCH)
+        path = package_from_github(tmp, url)
         sys.path.insert(0, path)
         from jtop_installer.cli import main as cli_main
         return cli_main(sys.argv[1:])
