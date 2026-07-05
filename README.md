@@ -1,5 +1,10 @@
 # jtop-installer
 
+To install jtop-installer which then automatically installs or upgrades Jetson_Stats / JTOP.
+```bash
+curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
+```
+
 Bootstrap installer for [jetson-stats](https://github.com/rbonghi/jetson_stats) (`jtop`).
 
 It installs jtop into an **isolated uv venv** at `~/.local/share/jtop` — never
