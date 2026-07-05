@@ -1,104 +1,81 @@
 # jtop-installer
 
-To install jtop-installer which then automatically installs or upgrades Jetson_Stats / JTOP.
-```bash
-curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
-```
+`jtop-installer` installs or upgrades [`jetson-stats`](https://github.com/rbonghi/jetson_stats), which provides the `jtop` program for NVIDIA Jetson systems.
 
-Bootstrap installer for [jetson-stats](https://github.com/rbonghi/jetson_stats) (`jtop`).
+The installer uses an isolated `uv` virtual environment instead of installing into system Python site-packages. This avoids problems with externally managed Python installations and does not require `--break-system-packages`.
 
-It installs jtop into an **isolated uv venv** at `~/.local/share/jtop` — never
-into system site-packages — so it works on externally managed Pythons without
-`--break-system-packages`. System-wide it only creates:
+## Quick start
 
-- a symlink: `/usr/local/bin/jtop` → `~/.local/share/jtop/bin/jtop`
-- a systemd unit: `/etc/systemd/system/jtop.service`
-
-This is a pure-Python replacement for the former
-`install_jtop_torun_without_sudo.sh` and `upgrade-jtop.sh` scripts.
-
-## Usage
-
-Run as a **regular user** (not with sudo — it invokes sudo itself when needed;
-run `sudo -v` first if you prefer to prime credentials).
-
-### One step, no prerequisites (only python3)
+On a machine without `uv` or `pipx`, run directly from the repository using system Python to install `jtop`:
 
 ```bash
 curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
 ```
 
-With no arguments it auto-detects: if jtop already exists (venv, symlink,
-`PATH`, or a legacy copy in system/user site-packages or /opt) it runs
-`upgrade`, otherwise `install`. To force one, append `install` or `upgrade`
-after the trailing `-`.
+## Using uv or pipx
 
-`bootstrap.py` downloads this repo's source tarball from GitHub, imports the
-package from a temporary directory, and runs the CLI — which then bootstraps
-uv itself if needed. Nothing is installed on the system by the bootstrap
-itself. Set `JTOP_INSTALLER_BRANCH` to bootstrap from a branch other than
-`main`, or `JTOP_INSTALLER_REPO` to use a fork.
-
-### With uv or pipx already installed
-
-With [uv](https://docs.astral.sh/uv/) installed:
+If [`uv`](https://docs.astral.sh/uv/) is already installed:
 
 ```bash
-# Auto-detect (upgrade if jtop exists, install otherwise)
 uvx jtop-installer
-
-# Fresh install
-uvx jtop-installer install
-
-# Upgrade (also removes any legacy system-wide jtop installs)
-uvx jtop-installer upgrade
 ```
 
-Or with pipx:
+If `pipx` is already installed:
 
 ```bash
-pipx run jtop-installer install
+pipx run jtop-installer
 ```
 
-On a machine without uv/pipx, run it straight from the repo with system Python
-(stdlib only, no dependencies):
+## What this package does
 
-```bash
-python3 -m jtop_installer.cli install
+`jtop-installer` installs or upgrades `jetson-stats` / `jtop` into an isolated `uv` virtual environment located at:
+
+```text
+~/.local/share/jtop
 ```
 
-(from this directory; `install` will bootstrap uv itself if it is missing.)
+It never installs `jetson-stats` into system site-packages.
 
-### Options
+System-wide, it only creates:
 
-- `--ref REQUIREMENT` — what to install, e.g. `jetson-stats` (PyPI) or a git
-  URL/branch. Defaults to `git+https://github.com/rbonghi/jetson_stats.git`.
-  Also settable via the `JTOP_REF` environment variable.
-- `install -p / --python VERSION` — Python version for the venv (default `3.12`;
-  uv downloads it if not present).
+* a symlink:
 
-## What `install` does
+  ```text
+  /usr/local/bin/jtop -> ~/.local/share/jtop/bin/jtop
+  ```
 
-1. Bootstraps `uv` if missing (downloads the official installer via stdlib urllib).
-2. Ensures the `jtop` group exists.
-3. Creates the venv at `~/.local/share/jtop` (`uv venv -p 3.12 --seed`).
-4. Installs/upgrades jetson-stats into it.
-5. Optionally symlinks NVIDIA's proprietary `pylibjetsonpower` (Thor) from
-   system dist-packages into the venv, if present.
-6. Creates the `/usr/local/bin/jtop` symlink and the `jtop.service` systemd
-   unit, then enables and starts the service.
+* a systemd service unit:
 
-## What `upgrade` does
+  ```text
+  /etc/systemd/system/jtop.service
+  ```
 
-1. Removes legacy system-wide jtop installs (pip uninstall from every system
-   Python, then force-removes leftovers) — the venv is untouched by this step.
-2. Falls back to a full `install` if uv or the venv is missing/broken.
-3. Stops the service, clears root-owned `__pycache__` dirs in the venv,
-   force-reinstalls jetson-stats, refreshes the symlink, restarts the service.
+## Fresh installation
 
-## Building / publishing
+If `jetson-stats` / `jtop` has never been installed, this package performs a fresh installation of the current `jetson-stats` release.
 
-```bash
-uv build          # produces dist/*.whl and dist/*.tar.gz
-uv publish        # upload to PyPI (requires credentials)
-```
+The installer:
+
+1. Bootstraps `uv` if it is missing by downloading the official installer using Python standard-library `urllib`.
+2. Ensures that the `jtop` group exists.
+3. Creates the virtual environment at `~/.local/share/jtop`.
+4. Installs `jetson-stats` into that virtual environment.
+5. Creates the `/usr/local/bin/jtop` symlink so that `sudo jtop` works.
+6. Creates the systemd `jtop.service` unit.
+7. Enables and starts the `jtop` service.
+
+## Upgrade
+
+If `jetson-stats` / `jtop` was previously installed, this package upgrades it to the current `jetson-stats` release.
+
+The installer:
+
+1. Removes outdated legacy system-wide `jtop` installs by running `pip uninstall` from every detected system Python directory, then removing leftover files.
+2. Leaves the isolated virtual environment untouched during legacy cleanup.
+3. Falls back to a full installation if `uv` or the virtual environment is missing or broken.
+4. Stops the `jtop` service.
+5. Removes root-owned `__pycache__` directories from the virtual environment.
+6. Reinstalls `jetson-stats`.
+7. Refreshes the `/usr/local/bin/jtop` symlink.
+8. Restarts the `jtop` service.
+
