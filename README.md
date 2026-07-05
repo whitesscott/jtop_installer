@@ -25,11 +25,8 @@ curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/boo
 
 With no arguments it auto-detects: if jtop already exists (venv, symlink,
 `PATH`, or a legacy copy in system/user site-packages or /opt) it runs
-`upgrade`, otherwise `install`. Append `install` or `upgrade` to force one:
-
-```bash
-curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 - install
-```
+`upgrade`, otherwise `install`. To force one, append `install` or `upgrade`
+after the trailing `-`.
 
 `bootstrap.py` downloads this repo's source tarball from GitHub, imports the
 package from a temporary directory, and runs the CLI — which then bootstraps
