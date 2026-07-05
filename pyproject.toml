@@ -8,9 +8,10 @@ dynamic = ["version"]
 description = "Bootstrap installer for jetson-stats (jtop): isolated uv venv, system-wide symlink, and systemd service — never touches system site-packages"
 readme = "README.md"
 authors = [
-    {name = "Raffaello Bonghi", email = "raffaello@rnext.it"},
+    {name = "Scott White", email = "whitesscott@gmail.com"},
 ]
-license = "AGPL-3.0-or-later"
+license = "MIT"
+license-files = ["LICENSE"]
 keywords = ["jetson_stats", "jtop", "installer", "nvidia", "Jetson"]
 classifiers = [
     "Development Status :: 4 - Beta",
