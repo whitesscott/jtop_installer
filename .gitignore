@@ -1,5 +1,6 @@
 __pycache__/
 *.pyc
 *.egg-info/
+.original_readme.md
 dist/
 build/

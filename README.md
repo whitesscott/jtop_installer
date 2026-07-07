@@ -2,48 +2,42 @@
 
 `jtop-installer` installs or upgrades [`jetson-stats`](https://github.com/rbonghi/jetson_stats), which provides the `jtop` program for NVIDIA Jetson systems.
 
-
 ## Installation
 
-On a machine without `uv` or `pipx`, run direct from the repository using system Python to install `jtop`:
+Choose **one** of the following installation commands:
 
-```bash
-curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
-```
-
-## Using uv or pipx
-
-If [`uv`](https://docs.astral.sh/uv/) is already installed:
+**uv**
 
 ```bash
 uvx jtop-installer
 ```
 
-If sudo apt install `pipx` is already installed:
+**pipx**
 
 ```bash
 pipx run jtop-installer
 ```
 
+**curl**
+
+```bash
+curl -LsSf https://raw.githubusercontent.com/whitesscott/jtop_installer/main/bootstrap.py | python3 -
+```
+
+> **Note:** The `curl` method uses the system Python as the installer.
+
 ## What this package does
 
-`jtop-installer` installs or upgrades Current Release `jetson-stats` / `jtop` into a `uv` virtual environment located at:
+`jtop-installer` installs or upgrades to the current release of `jetson-stats` / `jtop` in a `uv` virtual environment located at:
 
 ```text
 ~/.local/share/jtop
 ```
 
-The installer uses the exceptionally fast `uv` virtual environment. It does not install `jetson-stats` into system site-packages. Instead, it avoids modifying Ubuntu/JetPack’s apt managed system Python that includes externally managed Python installations where `pip` enforces PEP 668 protections. It does not require `--break-system-packages`.
+The installer creates a fast, isolated `uv` virtual environment for `jetson-stats`. It does not modify Ubuntu's system Python environment, respecting the PEP 668 protections that prevent `pip` from conflicting with the apt system package manager. It never requires `--break-system-packages`.
 
-System-wide it only creates:
-* a symlink:
-  ```text
-  /usr/local/bin/jtop -> ~/.local/share/jtop/bin/jtop
-  ```
-* a systemd service unit:
-  ```text
-  /etc/systemd/system/jtop.service
-  ```
+Installation runs as your normal user. A single `sudo` prompt covers the system-level actions: removing root-owned `__pycache__` directories created by `sudo jtop`, creating the `jtop` symlink, installing the systemd `jtop.service` unit, and creating the `jtop` group. Everything else — the virtual environment and `jetson-stats` itself — is installed in your home directory without root.
+
 
 ## Fresh installation
 
@@ -51,13 +45,14 @@ If `jetson-stats` / `jtop` has never been installed, this package performs a fre
 
 The installer:
 
-1. Bootstraps `uv` if it is missing by downloading the official installer using Python standard-library `urllib`.
+1. Bootstraps `uv` if it is missing by downloading the official installer using the Python standard-library `urllib`.
 2. Ensures that the `jtop` group exists.
 3. Creates the virtual environment at `~/.local/share/jtop`.
 4. Installs `jetson-stats` into that virtual environment.
 5. Creates the `/usr/local/bin/jtop` symlink so that `sudo jtop` works.
 6. Creates the systemd `jtop.service` unit.
 7. Enables and starts the `jtop` service.
+
 
 ## Upgrade
 
@@ -73,4 +68,3 @@ The installer:
 6. Reinstalls `jetson-stats`.
 7. Refreshes the `/usr/local/bin/jtop` symlink.
 8. Restarts the `jtop` service.
-
