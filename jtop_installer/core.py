@@ -24,6 +24,11 @@ DEFAULT_REF = "git+https://github.com/rbonghi/jetson_stats.git"
 DEFAULT_PYTHON = "3.12"
 UV_INSTALL_URL = "https://astral.sh/uv/install.sh"
 
+# jetson_stats' setup.py aborts venv builds unless run as root or with the
+# jtop service already active. Setting the 'container' env var makes its
+# is_docker() check pass, which skips those install-time hooks entirely.
+BUILD_ENV = {"container": "jtop-installer"}
+
 SYSTEMD_UNIT_CONTENT = """\
 [Unit]
 Description=Jetson Stats (jtop service)
@@ -46,15 +51,17 @@ class InstallerError(Exception):
     pass
 
 
-def run(cmd, sudo=False, check=True, capture=False, input_bytes=None):
+def run(cmd, sudo=False, check=True, capture=False, input_bytes=None, extra_env=None):
     cmd = [str(c) for c in cmd]
     if sudo:
         cmd = ["sudo"] + cmd
+    env = dict(os.environ, **extra_env) if extra_env else None
     result = subprocess.run(
         cmd,
         check=False,
         stdout=subprocess.PIPE if capture else None,
         input=input_bytes,
+        env=env,
     )
     if check and result.returncode != 0:
         raise InstallerError(
@@ -297,7 +304,7 @@ def install(ref=DEFAULT_REF, python=DEFAULT_PYTHON):
     run([uv, "venv", VENV_DIR, "-p", python, "--seed", "--clear"])
 
     print("Installing/upgrading {} from: {}".format(PKG_NAME, ref))
-    run([uv, "pip", "install", "--python", JTOP_PYTHON, "--upgrade", ref])
+    run([uv, "pip", "install", "--python", JTOP_PYTHON, "--upgrade", ref], extra_env=BUILD_ENV)
 
     link_pylibjetsonpower()
 
@@ -362,7 +369,10 @@ def upgrade(ref=DEFAULT_REF):
 
     print("Upgrading {} from:".format(PKG_NAME))
     print("  {}".format(ref))
-    run([uv, "pip", "install", "--python", JTOP_PYTHON, "--upgrade", "--force-reinstall", ref])
+    run(
+        [uv, "pip", "install", "--python", JTOP_PYTHON, "--upgrade", "--force-reinstall", ref],
+        extra_env=BUILD_ENV,
+    )
 
     if not os.access(str(JTOP_BIN), os.X_OK):
         raise InstallerError("Upgrade failed: jtop binary not found: {}".format(JTOP_BIN))
